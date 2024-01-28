@@ -7,19 +7,23 @@
 class Game
 {
 public:
+    // Constructor
     Game();
+
+    // Destructor
+    ~Game();
 
     Board &getBoard();
 
-    // void startGame();
+    void startGame();
 
     // void printPGN() const;
 
-    // void promptMove() const;
+    void promptMove();
 
 private:
     unsigned short int move;  // Stores move
-    Move *lastMove = nullptr; // Stores last move
+    Move *prevMove = nullptr; // Stores last move
     Board board;              // Stores board
 };
 

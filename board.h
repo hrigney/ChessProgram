@@ -30,6 +30,12 @@ public:
     // Makes move
     void makeMove(Move *newMove);
 
+    // Checks that the path is clear to move piece
+    bool isPathClear(Move *newMove) const;
+
+    // Undoes move
+    // void undoMove()
+
 private:
     char turn;         // Stores which player's turn it is
     Square grid[8][8]; // Stores grid

@@ -140,7 +140,8 @@ Move *Board::requestMove(const std::string &notation, Move *prevMove)
     if (newMove->getStartCol() && newMove->getStartRow())
     {
         if (grid[newMove->getStartRow() - '1'][newMove->getStartCol() - 'a'].piece &&
-            grid[newMove->getStartRow() - '1'][newMove->getStartCol() - 'a'].piece->isValidMove(newMove))
+            grid[newMove->getStartRow() - '1'][newMove->getStartCol() - 'a'].piece->isValidMove(newMove) &&
+            isPathClear(newMove))
         {
             found = true;
         }
@@ -154,7 +155,8 @@ Move *Board::requestMove(const std::string &notation, Move *prevMove)
             newMove->setStartRow('1' + i);
 
             if (grid[i][newMove->getStartCol() - 'a'].piece &&
-                grid[i][newMove->getStartCol() - 'a'].piece->isValidMove(newMove))
+                grid[i][newMove->getStartCol() - 'a'].piece->isValidMove(newMove) &&
+                isPathClear(newMove))
             {
                 found = true;
                 break;
@@ -170,7 +172,8 @@ Move *Board::requestMove(const std::string &notation, Move *prevMove)
             newMove->setStartCol('a' + j);
 
             if (grid[j][newMove->getStartCol() - 'a'].piece &&
-                grid[j][newMove->getStartCol() - 'a'].piece->isValidMove(newMove))
+                grid[j][newMove->getStartCol() - 'a'].piece->isValidMove(newMove) &&
+                isPathClear(newMove))
             {
                 found = true;
                 break;
@@ -190,7 +193,8 @@ Move *Board::requestMove(const std::string &notation, Move *prevMove)
                 newMove->setStartRow('1' + i);
 
                 if (grid[i][j].piece &&
-                    grid[i][j].piece->isValidMove(newMove))
+                    grid[i][j].piece->isValidMove(newMove) &&
+                    isPathClear(newMove))
                 {
                     found = true;
                     break;
@@ -200,15 +204,16 @@ Move *Board::requestMove(const std::string &notation, Move *prevMove)
     }
 
     // If not found return null ptr
-    if (found)
-    {
-        makeMove(newMove);
-        turn = (turn == 'W') ? 'B' : 'W';
-    }
-    else
+    if (!found)
     {
         return nullptr;
     }
+
+    // Makes move
+    makeMove(newMove);
+
+    // Changes turn
+    turn = (turn == 'W') ? 'B' : 'W';
 
     // Returns newMove if succesful
     return newMove;
@@ -225,4 +230,40 @@ void Board::makeMove(Move *newMove)
 
     // Moves piece to new square
     newMove->getEnd()->piece = toMove;
+}
+
+// Checks that the path is clear to move piece
+bool Board::isPathClear(Move *newMove) const
+{
+    // If Knight move don't need to worry
+    if (newMove->getPiece() == 'N')
+    {
+        return true;
+    }
+
+    // Stores how far the piece moves col and row wise
+    int rowMove = newMove->getEnd()->row - newMove->getStartRow();
+    int colMove = newMove->getEnd()->col - newMove->getStartCol();
+
+    // Stores step size when scouting board
+    int rowStep = (rowMove > 0) - (rowMove < 0);
+    int colStep = (colMove > 0) - (colMove < 0);
+
+    // Stores current square we're searching
+    int currRow = newMove->getStartRow() - '1' + rowStep;
+    int currCol = newMove->getStartCol() - 'a' + colStep;
+
+    // Makes sure there's no pieces in the way of move
+    while ((currRow != newMove->getEnd()->row - '1') || (currCol != newMove->getEnd()->col - 'a'))
+    {
+        if (grid[currRow][currCol].piece)
+        {
+            return false;
+        }
+
+        currRow += rowStep;
+        currCol += colStep;
+    }
+
+    return true;
 }

@@ -45,7 +45,7 @@ public:
     void setNotation(char notation);
 
     // Decides if a move is valid
-    bool isValidMove(Move *newMove) const;
+    bool virtual isValidMove(Move *newMove) const;
 
     // Undos move
     // void virtual undoMove(Move *newMove) = 0;
@@ -64,7 +64,7 @@ public:
     Pawn(char colour, char notation);
 
     // Decides if a move is valid
-    bool isValidMove(Move *newMove, Square (&grid)[8][8]) const;
+    bool isValidMove(Move *newMove) const override;
 
 private:
     bool moved;
@@ -79,7 +79,7 @@ public:
     Knight(char colour);
 
     // Decides if a move is valid
-    bool isValidMove(Move *newMove, Square (&grid)[8][8]) const;
+    bool isValidMove(Move *newMove) const override;
 };
 
 /* Bishop class */
@@ -91,7 +91,7 @@ public:
     Bishop(char colour);
 
     // Decides if a move is valid
-    bool isValidMove(Move *newMove, Square (&grid)[8][8]) const;
+    bool isValidMove(Move *newMove) const override;
 };
 
 /* Rook class */
@@ -103,7 +103,7 @@ public:
     Rook(char colour);
 
     // Decides if a move is valid
-    bool isValidMove(Move *newMove, Square (&grid)[8][8]) const;
+    bool isValidMove(Move *newMove) const override;
 
 private:
     bool moved;
@@ -118,7 +118,7 @@ public:
     Queen(char colour);
 
     // Decides if a move is valid
-    bool isValidMove(Move *newMove, Square (&grid)[8][8]) const;
+    bool isValidMove(Move *newMove) const override;
 };
 
 /* King class */
@@ -136,7 +136,7 @@ public:
     bool getCheckStatus() const;
 
     // Decides if a move is valid
-    bool isValidMove(Move *newMove, Square (&grid)[8][8]) const;
+    bool isValidMove(Move *newMove) const override;
 
 private:
     bool moved;
@@ -183,12 +183,6 @@ public:
     // Gets mate
     bool getMate() const;
 
-    // Sets direction
-    void setDirection(char direction);
-
-    // Gets startCol
-    char getDirection() const;
-
     // Gets notation
     const std::string &getNotation() const;
 
@@ -213,10 +207,9 @@ private:
     bool castle;
     bool check;
     bool mate;
-    char direction = '\0';
 
     // PGN notation of move
-    std::string notation;
+    const std::string notation;
 
     // Previous move
     Move *prevMove = nullptr;

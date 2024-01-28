@@ -30,6 +30,7 @@ void Piece::setNotation(char notation)
 // Decides if a move is valid
 bool Piece::isValidMove(Move *newMove) const
 {
+    // std::cout << "Got to Piece::isValidMove() for " << getColour() << getNotation() << std::endl;
     // Checks colour matches
     if (newMove->getColour() != colour)
     {
@@ -55,7 +56,7 @@ Pawn::Pawn(char colour, char notation)
 }
 
 // Decides if a move is valid
-bool Pawn::isValidMove(Move *newMove, Square (&grid)[8][8]) const
+bool Pawn::isValidMove(Move *newMove) const
 {
     // Calls base function
     if (!Piece::isValidMove(newMove))
@@ -66,24 +67,20 @@ bool Pawn::isValidMove(Move *newMove, Square (&grid)[8][8]) const
     // If move is a capture
     if (newMove->getCapture())
     {
-        // If piece doesn't move 1 diagonal
-        if ((newMove->getEnd()->row - newMove->getStartRow() != 1) ||
+        // If doesn't move 1 diagonal
+        if ((std::abs(newMove->getEnd()->row - newMove->getStartRow()) != 1) ||
             (std::abs(newMove->getEnd()->col - newMove->getStartCol()) != 1))
         {
             return false;
         }
-
-        newMove->setDirection('D');
     }
     else
     {
-        // If piece doesn't move 1/2 up
-        if ((newMove->getEnd()->row - newMove->getStartRow() != 1) || !((newMove->getEnd()->row - newMove->getStartRow() == 2) && !moved))
+        // If doesn't move 1/2 up
+        if ((std::abs(newMove->getEnd()->row - newMove->getStartRow()) != 1) && !((std::abs(newMove->getEnd()->row - newMove->getStartRow()) == 2) && !moved))
         {
             return false;
         }
-
-        newMove->setDirection('V');
     }
 
     return true;
@@ -98,12 +95,25 @@ Knight::Knight(char colour)
 }
 
 // Decides if a move is valid
-bool Knight::isValidMove(Move *newMove, Square (&grid)[8][8]) const
+bool Knight::isValidMove(Move *newMove) const
 {
     // Calls base function
-    bool toReturn = Piece::isValidMove(newMove);
+    if (!Piece::isValidMove(newMove))
+    {
+        return false;
+    }
 
-    return toReturn;
+    // If doesn't move like knight
+    int colMove = std::abs(newMove->getEnd()->col - newMove->getStartCol());
+    int rowMove = std::abs(newMove->getEnd()->row - newMove->getStartRow());
+
+    if (!((rowMove == 2) && (colMove == 1)) &&
+        !((rowMove == 1) && (colMove == 2)))
+    {
+        return false;
+    }
+
+    return true;
 }
 
 /* Bishop class */
@@ -115,12 +125,22 @@ Bishop::Bishop(char colour)
 }
 
 // Decides if a move is valid
-bool Bishop::isValidMove(Move *newMove, Square (&grid)[8][8]) const
+bool Bishop::isValidMove(Move *newMove) const
 {
     // Calls base function
-    bool toReturn = Piece::isValidMove(newMove);
+    if (!Piece::isValidMove(newMove))
+    {
+        return false;
+    }
 
-    return toReturn;
+    // If doesn't move diagonally
+    if (std::abs(newMove->getEnd()->row - newMove->getStartRow()) !=
+        std::abs(newMove->getEnd()->col - newMove->getStartCol()))
+    {
+        return false;
+    }
+
+    return true;
 }
 
 /* Rook class */
@@ -133,12 +153,27 @@ Rook::Rook(char colour)
 }
 
 // Decides if a move is valid
-bool Rook::isValidMove(Move *newMove, Square (&grid)[8][8]) const
+bool Rook::isValidMove(Move *newMove) const
 {
     // Calls base function
-    bool toReturn = Piece::isValidMove(newMove);
+    if (!Piece::isValidMove(newMove))
+    {
+        return false;
+    }
 
-    return toReturn;
+    // If castle
+    if (newMove->getCastle() && moved)
+    {
+        return false; // If castle we have already checked valid direction
+    }
+    // If doesn't move vertically or horizontally
+    // Works because succesful Move class requires an actual move
+    else if ((newMove->getEnd()->row - newMove->getStartRow()) && (newMove->getEnd()->col - newMove->getStartCol()))
+    {
+        return false;
+    }
+
+    return true;
 }
 
 /* Queen class */
@@ -150,12 +185,24 @@ Queen::Queen(char colour)
 }
 
 // Decides if a move is valid
-bool Queen::isValidMove(Move *newMove, Square (&grid)[8][8]) const
+bool Queen::isValidMove(Move *newMove) const
 {
     // Calls base function
-    bool toReturn = Piece::isValidMove(newMove);
+    if (!Piece::isValidMove(newMove))
+    {
+        return false;
+    }
 
-    return toReturn;
+    // If doesn't move vertically, horizontally or diagonally
+    int colMove = newMove->getEnd()->col - newMove->getStartCol();
+    int rowMove = newMove->getEnd()->row - newMove->getStartRow();
+
+    if (colMove && rowMove && (std::abs(colMove) != std::abs(rowMove)))
+    {
+        return false;
+    }
+
+    return true;
 }
 
 /* King class */
@@ -169,12 +216,27 @@ King::King(char colour)
 }
 
 // Decides if a move is valid
-bool King::isValidMove(Move *newMove, Square (&grid)[8][8]) const
+bool King::isValidMove(Move *newMove) const
 {
     // Calls base function
-    bool toReturn = Piece::isValidMove(newMove);
+    if (!Piece::isValidMove(newMove))
+    {
+        return false;
+    }
 
-    return toReturn;
+    // If castle
+    if (newMove->getCastle() && moved)
+    {
+        return false; // If castle we have already checked valid direction
+    }
+    // If absolute move size greater than 1
+    else if ((std::abs(newMove->getEnd()->col - newMove->getStartCol()) > 1) ||
+             (std::abs(newMove->getEnd()->row - newMove->getStartRow()) > 1))
+    {
+        return false;
+    }
+
+    return true;
 }
 
 /* Move class */
@@ -393,18 +455,6 @@ bool Move::getCheck() const
 bool Move::getMate() const
 {
     return mate;
-}
-
-// Sets direction
-void Move::setDirection(char direction)
-{
-    this->direction = direction;
-}
-
-// Gets startCol
-char Move::getDirection() const
-{
-    return direction;
 }
 
 // Gets notation
