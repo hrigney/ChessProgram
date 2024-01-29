@@ -9,6 +9,11 @@ Piece::Piece(char colour, char notation)
     this->notation = notation;
 }
 
+Piece::~Piece()
+{
+    // empty destructor
+}
+
 // Gets notation
 char Piece::getNotation() const
 {
@@ -86,6 +91,18 @@ bool Pawn::isValidMove(Move *newMove) const
     return true;
 }
 
+// Returns true if piece can attack orthogonally
+bool Pawn::attackOrthogonal() const
+{
+    return false;
+}
+
+// Returns true if piece can attack diagonally
+bool Pawn::attackDiagonal() const
+{
+    return false;
+}
+
 /* Knight class */
 
 // Constructor
@@ -116,6 +133,18 @@ bool Knight::isValidMove(Move *newMove) const
     return true;
 }
 
+// Returns true if piece can attack orthogonally
+bool Knight::attackOrthogonal() const
+{
+    return false;
+}
+
+// Returns true if piece can attack diagonally
+bool Knight::attackDiagonal() const
+{
+    return false;
+}
+
 /* Bishop class */
 
 // Constructor
@@ -140,6 +169,18 @@ bool Bishop::isValidMove(Move *newMove) const
         return false;
     }
 
+    return true;
+}
+
+// Returns true if piece can attack orthogonally
+bool Bishop::attackOrthogonal() const
+{
+    return false;
+}
+
+// Returns true if piece can attack diagonally
+bool Bishop::attackDiagonal() const
+{
     return true;
 }
 
@@ -176,6 +217,18 @@ bool Rook::isValidMove(Move *newMove) const
     return true;
 }
 
+// Returns true if piece can attack orthogonally
+bool Rook::attackOrthogonal() const
+{
+    return true;
+}
+
+// Returns true if piece can attack diagonally
+bool Rook::attackDiagonal() const
+{
+    return false;
+}
+
 /* Queen class */
 
 // Constructor
@@ -202,6 +255,18 @@ bool Queen::isValidMove(Move *newMove) const
         return false;
     }
 
+    return true;
+}
+
+// Returns true if piece can attack orthogonally
+bool Queen::attackOrthogonal() const
+{
+    return true;
+}
+
+// Returns true if piece can attack diagonally
+bool Queen::attackDiagonal() const
+{
     return true;
 }
 
@@ -237,6 +302,18 @@ bool King::isValidMove(Move *newMove) const
     }
 
     return true;
+}
+
+// Returns true if piece can attack orthogonally
+bool King::attackOrthogonal() const
+{
+    return false;
+}
+
+// Returns true if piece can attack diagonally
+bool King::attackDiagonal() const
+{
+    return false;
 }
 
 /* Move class */

@@ -23,6 +23,28 @@ struct Square
 
     // Piece currently on square
     Piece *piece = nullptr;
+
+    // Stores orthogonally adjacent squares
+    Square *up = nullptr;
+    Square *down = nullptr;
+    Square *left = nullptr;
+    Square *right = nullptr;
+
+    // Stores diagonally adjacent square
+    Square *upLeft = nullptr;
+    Square *upRight = nullptr;
+    Square *downLeft = nullptr;
+    Square *downRight = nullptr;
+
+    // Stores knight move squares
+    Square *knightUpLeft = nullptr;    // Two up, one left
+    Square *knightUpRight = nullptr;   // Two up, one right
+    Square *knightDownLeft = nullptr;  // Two down, one left
+    Square *knightDownRight = nullptr; // Two down, one right
+    Square *knightLeftUp = nullptr;    // Two left, one up
+    Square *knightLeftDown = nullptr;  // Two left, one down
+    Square *knightRightUp = nullptr;   // Two right, one up
+    Square *knightRightDown = nullptr; // Two right, one down
 };
 
 /* Represents a chess piece */
@@ -33,7 +55,7 @@ public:
     Piece(char colour, char notation);
 
     // Destructor
-    // virtual ~Piece();
+    virtual ~Piece();
 
     // Returns notation of piece
     char getNotation() const;
@@ -47,8 +69,11 @@ public:
     // Decides if a move is valid
     bool virtual isValidMove(Move *newMove) const;
 
-    // Undos move
-    // void virtual undoMove(Move *newMove) = 0;
+    // Returns true if piece can attack orthogonally
+    bool virtual attackOrthogonal() const = 0;
+
+    // Returns true if piece can attack diagonally
+    bool virtual attackDiagonal() const = 0;
 
 private:
     char colour;   // Colour of piece
@@ -66,6 +91,12 @@ public:
     // Decides if a move is valid
     bool isValidMove(Move *newMove) const override;
 
+    // Returns true if piece can attack orthogonally
+    bool virtual attackOrthogonal() const override;
+
+    // Returns true if piece can attack diagonally
+    bool virtual attackDiagonal() const override;
+
 private:
     bool moved;
 };
@@ -80,6 +111,12 @@ public:
 
     // Decides if a move is valid
     bool isValidMove(Move *newMove) const override;
+
+    // Returns true if piece can attack orthogonally
+    bool virtual attackOrthogonal() const override;
+
+    // Returns true if piece can attack diagonally
+    bool virtual attackDiagonal() const override;
 };
 
 /* Bishop class */
@@ -92,6 +129,12 @@ public:
 
     // Decides if a move is valid
     bool isValidMove(Move *newMove) const override;
+
+    // Returns true if piece can attack orthogonally
+    bool virtual attackOrthogonal() const override;
+
+    // Returns true if piece can attack diagonally
+    bool virtual attackDiagonal() const override;
 };
 
 /* Rook class */
@@ -104,6 +147,12 @@ public:
 
     // Decides if a move is valid
     bool isValidMove(Move *newMove) const override;
+
+    // Returns true if piece can attack orthogonally
+    bool virtual attackOrthogonal() const override;
+
+    // Returns true if piece can attack diagonally
+    bool virtual attackDiagonal() const override;
 
 private:
     bool moved;
@@ -119,6 +168,12 @@ public:
 
     // Decides if a move is valid
     bool isValidMove(Move *newMove) const override;
+
+    // Returns true if piece can attack orthogonally
+    bool virtual attackOrthogonal() const override;
+
+    // Returns true if piece can attack diagonally
+    bool virtual attackDiagonal() const override;
 };
 
 /* King class */
@@ -137,6 +192,12 @@ public:
 
     // Decides if a move is valid
     bool isValidMove(Move *newMove) const override;
+
+    // Returns true if piece can attack orthogonally
+    bool virtual attackOrthogonal() const override;
+
+    // Returns true if piece can attack diagonally
+    bool virtual attackDiagonal() const override;
 
 private:
     bool moved;

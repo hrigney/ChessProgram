@@ -13,8 +13,49 @@ Board::Board()
     {
         for (int j = 0; j < 8; ++j)
         {
+            // Adds square coordinates
             grid[i][j].row = '1' + i;
             grid[i][j].col = 'a' + j;
+
+            // Adds adjacent squares
+            if (i > 0)
+            {
+                grid[i][j].left = &grid[i - 1][j];
+                if (j > 0)
+                    grid[i][j].downLeft = &grid[i - 1][j - 1];
+                if (j < 7)
+                    grid[i][j].upLeft = &grid[i - 1][j + 1];
+            }
+            if (i < 7)
+            {
+                grid[i][j].right = &grid[i + 1][j];
+                if (j > 0)
+                    grid[i][j].downRight = &grid[i + 1][j - 1];
+                if (j < 7)
+                    grid[i][j].upRight = &grid[i + 1][j + 1];
+            }
+            if (j > 0)
+                grid[i][j].down = &grid[i][j - 1];
+            if (j < 7)
+                grid[i][j].up = &grid[i][j + 1];
+
+            // Adds knight squares
+            if (i > 1 && j > 0)
+                grid[i][j].knightUpLeft = &grid[i - 2][j - 1];
+            if (i > 0 && j > 1)
+                grid[i][j].knightLeftUp = &grid[i - 1][j - 2];
+            if (i > 1 && j < 7)
+                grid[i][j].knightUpRight = &grid[i - 2][j + 1];
+            if (i > 0 && j < 6)
+                grid[i][j].knightRightUp = &grid[i - 1][j + 2];
+            if (i < 6 && j > 0)
+                grid[i][j].knightDownLeft = &grid[i + 2][j - 1];
+            if (i < 7 && j > 1)
+                grid[i][j].knightLeftDown = &grid[i + 1][j - 2];
+            if (i < 6 && j < 7)
+                grid[i][j].knightDownRight = &grid[i + 2][j + 1];
+            if (i < 7 && j < 6)
+                grid[i][j].knightRightDown = &grid[i + 1][j + 2];
         }
     }
 
@@ -266,4 +307,152 @@ bool Board::isPathClear(Move *newMove) const
     }
 
     return true;
+}
+
+// Checks if a square is attacked by a piece
+bool Board::squareAttacked(Square *square, char byPlayer) const
+{
+    // Stores square currently being searched
+    Square *curr = nullptr;
+
+    // Iterates through orthogonal movements
+    std::array<Square * Square::*, 4> orthoDirections = {&Square::left, &Square::right, &Square::up, &Square::down};
+
+    for (Square *Square::*direction : orthoDirections)
+    {
+        curr = square->*direction;
+
+        // First square we check for opposite King as well
+        if (curr)
+        {
+            if (curr->piece)
+            {
+                if (curr->piece->getColour() == byPlayer &&
+                    (curr->piece->getNotation() == 'K' || curr->piece->attackOrthogonal()))
+                {
+                    return true;
+                }
+
+                continue;
+            }
+
+            curr = square->*direction;
+        }
+
+        // Ensures not nullptr while traversing board
+        while (curr)
+        {
+            if (curr->piece)
+            {
+                // If find attacking piece return true
+                if (curr->piece->attackOrthogonal() && curr->piece->getColour() == byPlayer)
+                {
+                    return true;
+                }
+
+                break;
+            }
+
+            curr = curr->*direction;
+        }
+    }
+
+    // Iterates through diagonal movements
+    std::array<Square * Square::*, 4> diagDirections = {&Square::upLeft, &Square::upRight, &Square::downLeft, &Square::downRight};
+
+    for (Square *Square::*direction : diagDirections)
+    {
+        curr = square->*direction;
+
+        // First square we check for opposite King as well
+        if (curr)
+        {
+            if (curr->piece)
+            {
+                if (curr->piece->getColour() == byPlayer &&
+                    (curr->piece->getNotation() == 'K' || curr->piece->attackOrthogonal()))
+                {
+                    return true;
+                }
+
+                continue;
+            }
+
+            curr = square->*direction;
+        }
+
+        // Ensures not nullptr while traversing board
+        while (curr)
+        {
+            if (curr->piece)
+            {
+                // If find attacking piece return true
+                if (curr->piece->attackDiagonal() && curr->piece->getColour() == byPlayer)
+                {
+                    return true;
+                }
+
+                break;
+            }
+
+            curr = curr->*direction;
+        }
+    }
+
+    // Iterates through knight movements
+    std::array<Square * Square::*, 8> knightDirections = {
+        &Square::knightUpLeft, &Square::knightUpRight,
+        &Square::knightDownLeft, &Square::knightDownRight,
+        &Square::knightLeftUp, &Square::knightLeftDown,
+        &Square::knightRightUp, &Square::knightRightDown};
+
+    for (Square *Square::*direction : knightDirections)
+    {
+        curr = square->*direction;
+
+        // If find attacking piece return true
+        if (curr && curr->piece && curr->piece->attackDiagonal() && curr->piece->getColour() == byPlayer)
+        {
+            return true;
+        }
+    }
+
+    // Checks for opposing pawns
+    if (byPlayer == 'W')
+    {
+        // Checks for pawn on down left
+        if (square->downLeft && square->downLeft->piece &&
+            square->downLeft->piece->getNotation() == square->col - 1 &&
+            square->downLeft->piece->getColour() == byPlayer)
+        {
+            return true;
+        }
+        // Checks for pawn on down right
+        if (square->downRight && square->downRight->piece &&
+            square->downRight->piece->getNotation() == square->col + 1 &&
+            square->downRight->piece->getColour() == byPlayer)
+        {
+            return true;
+        }
+    }
+    else
+    {
+        // Checks for pawn on up left
+        if (square->upLeft && square->upLeft->piece &&
+            square->upLeft->piece->getNotation() == square->col - 1 &&
+            square->upLeft->piece->getColour() == byPlayer)
+        {
+            return true;
+        }
+        // Checks for pawn on up right
+        if (square->upRight && square->upRight->piece &&
+            square->upRight->piece->getNotation() == square->col + 1 &&
+            square->upRight->piece->getColour() == byPlayer)
+        {
+            return true;
+        }
+    }
+
+    // If couldn't find an attacking piece, return false
+    return false;
 }

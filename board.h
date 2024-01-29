@@ -30,11 +30,14 @@ public:
     // Makes move
     void makeMove(Move *newMove);
 
+    // Undoes move
+    // void undoMove()
+
     // Checks that the path is clear to move piece
     bool isPathClear(Move *newMove) const;
 
-    // Undoes move
-    // void undoMove()
+    // Checks if a square is attacked by a piece
+    bool squareAttacked(Square *square, char turn) const;
 
 private:
     char turn;         // Stores which player's turn it is

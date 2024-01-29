@@ -6,5 +6,6 @@
 #include <windows.h>
 #include <regex>
 #include <cmath>
+#include <array>
 
 #endif
