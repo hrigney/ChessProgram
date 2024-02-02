@@ -66,6 +66,12 @@ public:
     // Sets notation of piece
     void setNotation(char notation);
 
+    // Sets moved to true
+    void setMoved();
+
+    // Gets moved
+    bool getMoved() const;
+
     // Decides if a move is valid
     bool virtual isValidMove(Move *newMove) const;
 
@@ -76,8 +82,9 @@ public:
     bool virtual attackDiagonal() const = 0;
 
 private:
-    char colour;   // Colour of piece
-    char notation; // Notation of piece
+    char colour;        // Colour of piece
+    char notation;      // Notation of piece
+    bool moved = false; // Stores whether or not a piece has moved
 };
 
 /* Pawn class */
@@ -96,9 +103,6 @@ public:
 
     // Returns true if piece can attack diagonally
     bool virtual attackDiagonal() const override;
-
-private:
-    bool moved;
 };
 
 /* Knight class */
@@ -153,9 +157,6 @@ public:
 
     // Returns true if piece can attack diagonally
     bool virtual attackDiagonal() const override;
-
-private:
-    bool moved;
 };
 
 /* Queen class */
@@ -185,10 +186,16 @@ public:
     King(char colour);
 
     // Sets check status
-    void setCheck(bool check);
+    void setCheck(bool inCheck);
 
     // Gets check status of King
     bool getCheckStatus() const;
+
+    // Sets location of King
+    void setSquare(Square *square);
+
+    // Gets location of King
+    Square *getSquare() const;
 
     // Decides if a move is valid
     bool isValidMove(Move *newMove) const override;
@@ -200,16 +207,19 @@ public:
     bool virtual attackDiagonal() const override;
 
 private:
-    bool moved;
-    bool inCheck;
+    bool inCheck; // Stores whether or not King is in check
+    Square *square;
 };
 
 /* Represents a move in the game */
 class Move
 {
 public:
-    // Constructor
+    // Default constructor
     Move(char colour, const std::string &notation, Move *prevMove, Square (&grid)[8][8]);
+
+    // Castle rook constructor
+    Move(char colour, char startCol, char startRow, Square *end);
 
     // Gets piece
     char getPiece() const;

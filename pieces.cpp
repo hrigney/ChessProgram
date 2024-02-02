@@ -32,6 +32,18 @@ void Piece::setNotation(char notation)
     this->notation = notation;
 }
 
+// Sets moved to true
+void Piece::setMoved()
+{
+    moved = true;
+}
+
+// Gets moved
+bool Piece::getMoved() const
+{
+    return moved;
+}
+
 // Decides if a move is valid
 bool Piece::isValidMove(Move *newMove) const
 {
@@ -57,7 +69,6 @@ bool Piece::isValidMove(Move *newMove) const
 Pawn::Pawn(char colour, char notation)
     : Piece(colour, notation)
 {
-    moved = false;
 }
 
 // Decides if a move is valid
@@ -82,7 +93,7 @@ bool Pawn::isValidMove(Move *newMove) const
     else
     {
         // If doesn't move 1/2 up
-        if ((std::abs(newMove->getEnd()->row - newMove->getStartRow()) != 1) && !((std::abs(newMove->getEnd()->row - newMove->getStartRow()) == 2) && !moved))
+        if ((std::abs(newMove->getEnd()->row - newMove->getStartRow()) != 1) && !((std::abs(newMove->getEnd()->row - newMove->getStartRow()) == 2) && !getMoved()))
         {
             return false;
         }
@@ -190,7 +201,6 @@ bool Bishop::attackDiagonal() const
 Rook::Rook(char colour)
     : Piece(colour, 'R')
 {
-    moved = false;
 }
 
 // Decides if a move is valid
@@ -203,7 +213,7 @@ bool Rook::isValidMove(Move *newMove) const
     }
 
     // If castle
-    if (newMove->getCastle() && moved)
+    if (newMove->getCastle() && getMoved())
     {
         return false; // If castle we have already checked valid direction
     }
@@ -274,10 +284,32 @@ bool Queen::attackDiagonal() const
 
 // Constructor
 King::King(char colour)
-    : Piece(colour, 'K')
+    : Piece(colour, 'K'), inCheck(false)
 {
-    moved = false;
-    inCheck = false;
+}
+
+// Sets check status
+void King::setCheck(bool inCheck)
+{
+    this->inCheck = inCheck;
+}
+
+// Gets check status of King
+bool King::getCheckStatus() const
+{
+    return inCheck;
+}
+
+// Sets location of King
+void King::setSquare(Square *square)
+{
+    this->square = square;
+}
+
+// Gets location of King
+Square *King::getSquare() const
+{
+    return square;
 }
 
 // Decides if a move is valid
@@ -290,7 +322,7 @@ bool King::isValidMove(Move *newMove) const
     }
 
     // If castle
-    if (newMove->getCastle() && moved)
+    if (newMove->getCastle() && (getMoved() || inCheck))
     {
         return false; // If castle we have already checked valid direction
     }
@@ -318,7 +350,7 @@ bool King::attackDiagonal() const
 
 /* Move class */
 
-// Constructor
+// Default constructor
 Move::Move(char colour, const std::string &notation, Move *prevMove, Square (&grid)[8][8])
     : colour(colour), notation(notation), prevMove(prevMove)
 {
@@ -463,6 +495,13 @@ Move::Move(char colour, const std::string &notation, Move *prevMove, Square (&gr
             }
         }
     }
+}
+
+// Castle rook constructor
+Move::Move(char colour, char startCol, char startRow, Square *end)
+    : piece('R'), colour(colour), startCol(startCol), startRow(startRow),
+      capture(false), castle(true), check(false), mate(false), notation("")
+{
 }
 
 // Regex pattern
