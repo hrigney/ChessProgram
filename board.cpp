@@ -182,10 +182,13 @@ Move *Board::requestMove(const std::string &notation, Move *prevMove)
     // If start square given
     if (newMove->getStartCol() && newMove->getStartRow())
     {
+        std::cout << "Start square given" << std::endl;
+
         if (grid[newMove->getStartRow() - '1'][newMove->getStartCol() - 'a'].piece &&
             grid[newMove->getStartRow() - '1'][newMove->getStartCol() - 'a'].piece->isValidMove(newMove) &&
             isPathClear(newMove))
         {
+            std::cout << "Found = true" << std::endl;
             found = true;
         }
     }
@@ -275,11 +278,13 @@ Move *Board::requestMove(const std::string &notation, Move *prevMove)
         // Makes sure no piece attacking square King is crossing over, and there's a piece in rook square
         if (squareAttacked(&grid[row - '1'][colKing - 'a'], turn) || !grid[row - '1'][colRook - 'a'].piece)
         {
+            std::cout << "Attacking King square / Found no rook" << std::endl;
+
             return nullptr;
         }
 
         // Constructs castle rook move
-        castleRookMove = new Move(turn, colRook, row, &grid[row - '1'][colKing + 1 - 'a']);
+        castleRookMove = new Move(turn, colRook, row, &grid[row - '1'][colKing - 1 - 'a']);
 
         // Checks castle rook move is valid and makes move
         if (grid[row - '1'][colRook - 'a'].piece->isValidMove(castleRookMove))
@@ -291,14 +296,12 @@ Move *Board::requestMove(const std::string &notation, Move *prevMove)
     // Makes move, storing any captured piece
     Piece *captured = makeMove(newMove);
 
-    /* Start final making of move, setting checks, moved variables, changing turns */
-
     // Ensures current player's king is not in check after move is complete
     if ((turn == 'W' && squareAttacked(whiteKing->getSquare(), turn)) || (turn == 'B' && squareAttacked(blackKing->getSquare(), turn)))
     {
-        undoMove(newMove, captured);
-
         std::cout << "Own King in check after completion of move" << std::endl;
+
+        undoMove(newMove, captured);
 
         return nullptr;
     }
@@ -339,39 +342,42 @@ Move *Board::requestMove(const std::string &notation, Move *prevMove)
     // Deletes captured piece
     delete captured;
 
+    // Assigns moved to piece as true
+    newMove->getEnd()->piece->setMoved();
+
     // Returns newMove if succesful
     return newMove;
 }
 
 // Makes Move
-Piece *Board::makeMove(Move *newMove)
+Piece *Board::makeMove(Move *move)
 {
     // Captured piece to return
     Piece *captured = nullptr;
-    if (newMove->getCapture())
+    if (move->getCapture())
     {
-        captured = newMove->getEnd()->piece;
+        captured = move->getEnd()->piece;
     }
 
     // Assigns piece to be moved
-    Piece *toMove = grid[newMove->getStartRow() - '1'][newMove->getStartCol() - 'a'].piece;
+    Piece *toMove = grid[move->getStartRow() - '1'][move->getStartCol() - 'a'].piece;
 
     // Removes from previous square
-    grid[newMove->getStartRow() - '1'][newMove->getStartCol() - 'a'].piece = nullptr;
+    grid[move->getStartRow() - '1'][move->getStartCol() - 'a'].piece = nullptr;
 
     // Moves piece to new square
-    newMove->getEnd()->piece = toMove;
+    move->getEnd()->piece = toMove;
 
     // If piece moved is King change King square
-    if (newMove->getPiece() == 'K')
+    if (move->getPiece() == 'K')
     {
         if (turn == 'W')
         {
-            whiteKing->setSquare(newMove->getEnd());
+            whiteKing->setSquare(move->getEnd());
         }
         else
         {
-            blackKing->setSquare(newMove->getEnd());
+            blackKing->setSquare(move->getEnd());
         }
     }
 
@@ -504,7 +510,7 @@ bool Board::squareAttacked(Square *square, char player) const
             if (curr->piece)
             {
                 if (curr->piece->getColour() != player &&
-                    (curr->piece->getNotation() == 'K' || curr->piece->attackOrthogonal()))
+                    (curr->piece->getNotation() == 'K' || curr->piece->attackDiagonal()))
                 {
                     return true;
                 }
@@ -545,7 +551,7 @@ bool Board::squareAttacked(Square *square, char player) const
         curr = square->*direction;
 
         // If find attacking piece return true
-        if (curr && curr->piece && curr->piece->attackDiagonal() && curr->piece->getColour() != player)
+        if (curr && curr->piece && curr->piece->getNotation() == 'N' && curr->piece->getColour() != player)
         {
             return true;
         }

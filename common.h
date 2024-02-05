@@ -7,5 +7,6 @@
 #include <regex>
 #include <cmath>
 #include <array>
+#include <typeinfo>
 
 #endif

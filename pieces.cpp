@@ -3,10 +3,8 @@
 /* Piece class */
 
 // Constructor
-Piece::Piece(char colour, char notation)
+Piece::Piece(char colour, char notation) : colour(colour), notation(notation)
 {
-    this->colour = colour;
-    this->notation = notation;
 }
 
 Piece::~Piece()
@@ -213,9 +211,13 @@ bool Rook::isValidMove(Move *newMove) const
     }
 
     // If castle
-    if (newMove->getCastle() && getMoved())
+    if (newMove->getCastle())
     {
-        return false; // If castle we have already checked valid direction
+        // Return false if rook has moved
+        if (getMoved())
+        {
+            return false; // We have already checked valid direction for castles
+        }
     }
     // If doesn't move vertically or horizontally
     // Works because succesful Move class requires an actual move
@@ -322,9 +324,13 @@ bool King::isValidMove(Move *newMove) const
     }
 
     // If castle
-    if (newMove->getCastle() && (getMoved() || inCheck))
+    if (newMove->getCastle())
     {
-        return false; // If castle we have already checked valid direction
+        // Return false if piece has moved or inCheck
+        if (getMoved() || inCheck)
+        {
+            return false; // If castle we have already checked valid direction
+        }
     }
     // If absolute move size greater than 1
     else if ((std::abs(newMove->getEnd()->col - newMove->getStartCol()) > 1) ||
@@ -354,7 +360,6 @@ bool King::attackDiagonal() const
 Move::Move(char colour, const std::string &notation, Move *prevMove, Square (&grid)[8][8])
     : colour(colour), notation(notation), prevMove(prevMove)
 {
-
     // Stores regex matches
     std::smatch matches;
 
@@ -499,7 +504,7 @@ Move::Move(char colour, const std::string &notation, Move *prevMove, Square (&gr
 
 // Castle rook constructor
 Move::Move(char colour, char startCol, char startRow, Square *end)
-    : piece('R'), colour(colour), startCol(startCol), startRow(startRow),
+    : piece('R'), colour(colour), startCol(startCol), startRow(startRow), end(end),
       capture(false), castle(true), check(false), mate(false), notation("")
 {
 }

@@ -1,10 +1,7 @@
 #include "game.h"
 
-Game::Game()
+Game::Game() : move(0), prevMove(nullptr), board(Board())
 {
-    move = 0;
-    prevMove = nullptr;
-    board = Board();
 }
 
 Game::~Game()
