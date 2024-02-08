@@ -52,7 +52,7 @@ class Piece
 {
 public:
     // Constructor
-    Piece(char colour, char notation);
+    Piece(bool isWhite, char notation);
 
     // Destructor
     virtual ~Piece();
@@ -61,7 +61,7 @@ public:
     char getNotation() const;
 
     // Returns colour of piece
-    char getColour() const;
+    bool getIsWhite() const;
 
     // Sets notation of piece
     void setNotation(char notation);
@@ -82,8 +82,8 @@ public:
     bool virtual attackDiagonal() const = 0;
 
 private:
-    char colour;        // Colour of piece
     char notation;      // Notation of piece
+    bool isWhite;       // True if piece is white
     bool moved = false; // Stores whether or not a piece has moved
 };
 
@@ -93,7 +93,7 @@ class Pawn : public Piece
 {
 public:
     // Constructor
-    Pawn(char colour, char notation);
+    Pawn(bool isWhite, char notation);
 
     // Decides if a move is valid
     bool isValidMove(Move *newMove) const override;
@@ -111,7 +111,7 @@ class Knight : public Piece
 {
 public:
     // Constructor
-    Knight(char colour);
+    Knight(bool isWhite);
 
     // Decides if a move is valid
     bool isValidMove(Move *newMove) const override;
@@ -129,7 +129,7 @@ class Bishop : public Piece
 {
 public:
     // Constructor
-    Bishop(char colour);
+    Bishop(bool isWhite);
 
     // Decides if a move is valid
     bool isValidMove(Move *newMove) const override;
@@ -147,7 +147,7 @@ class Rook : public Piece
 {
 public:
     // Constructor
-    Rook(char colour);
+    Rook(bool isWhite);
 
     // Decides if a move is valid
     bool isValidMove(Move *newMove) const override;
@@ -165,7 +165,7 @@ class Queen : public Piece
 {
 public:
     // Constructor
-    Queen(char colour);
+    Queen(bool isWhite);
 
     // Decides if a move is valid
     bool isValidMove(Move *newMove) const override;
@@ -183,7 +183,7 @@ class King : public Piece
 {
 public:
     // Constructor
-    King(char colour);
+    King(bool isWhite);
 
     // Sets check status
     void setCheck(bool inCheck);
@@ -216,16 +216,16 @@ class Move
 {
 public:
     // Default constructor
-    Move(char colour, const std::string &notation, Move *prevMove, Square (&grid)[8][8]);
+    Move(bool isWhite, const std::string &notation, Move *prevMove, Square (&grid)[8][8]);
 
     // Castle rook constructor
-    Move(char colour, char startCol, char startRow, Square *end);
+    Move(bool isWhite, char startCol, char startRow, Square *end);
 
     // Gets piece
     char getPiece() const;
 
     // Gets colour
-    char getColour() const;
+    char getIsWhite() const;
 
     // Sets startCol
     void setStartCol(char startCol);
@@ -266,7 +266,7 @@ private:
 
     // Stores piece
     char piece;
-    char colour;
+    bool isWhite;
 
     // Stores starting and finishing square of piece
     char startCol = '\0';

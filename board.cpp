@@ -3,11 +3,8 @@
 /* Board class */
 
 // Constructor
-Board::Board()
+Board::Board() : whiteTurn(true)
 {
-    // Sets up board values
-    turn = 'W';
-
     // Sets up grid
     for (int i = 0; i < 8; ++i)
     {
@@ -64,34 +61,34 @@ Board::Board()
     // White pieces
     for (int j = 0; j < 8; j++)
     {
-        grid['2' - '1'][j].piece = new Pawn('W', 'a' + j);
+        grid['2' - '1'][j].piece = new Pawn(true, 'a' + j);
     }
-    whiteKing = new King('W');
-    grid['1' - '1']['a' - 'a'].piece = new Rook('W');
-    grid['1' - '1']['b' - 'a'].piece = new Knight('W');
-    grid['1' - '1']['c' - 'a'].piece = new Bishop('W');
-    grid['1' - '1']['d' - 'a'].piece = new Queen('W');
-    grid['1' - '1']['e' - 'a'].piece = whiteKing;
-    whiteKing->setSquare(&grid['1' - '1']['e' - 'a']);
-    grid['1' - '1']['f' - 'a'].piece = new Bishop('W');
-    grid['1' - '1']['g' - 'a'].piece = new Knight('W');
-    grid['1' - '1']['h' - 'a'].piece = new Rook('W');
+    kings[1] = new King(true);
+    grid['1' - '1']['a' - 'a'].piece = new Rook(true);
+    grid['1' - '1']['b' - 'a'].piece = new Knight(true);
+    grid['1' - '1']['c' - 'a'].piece = new Bishop(true);
+    grid['1' - '1']['d' - 'a'].piece = new Queen(true);
+    grid['1' - '1']['e' - 'a'].piece = kings[1];
+    kings[1]->setSquare(&grid['1' - '1']['e' - 'a']);
+    grid['1' - '1']['f' - 'a'].piece = new Bishop(true);
+    grid['1' - '1']['g' - 'a'].piece = new Knight(true);
+    grid['1' - '1']['h' - 'a'].piece = new Rook(true);
 
     // Black pieces
     for (int j = 0; j < 8; j++)
     {
-        grid['7' - '1'][j].piece = new Pawn('B', 'a' + j);
+        grid['7' - '1'][j].piece = new Pawn(false, 'a' + j);
     }
-    blackKing = new King('B');
-    grid['8' - '1']['a' - 'a'].piece = new Rook('B');
-    grid['8' - '1']['b' - 'a'].piece = new Knight('B');
-    grid['8' - '1']['c' - 'a'].piece = new Bishop('B');
-    grid['8' - '1']['d' - 'a'].piece = new Queen('B');
-    grid['8' - '1']['e' - 'a'].piece = blackKing;
-    blackKing->setSquare(&grid['8' - '1']['e' - 'a']);
-    grid['8' - '1']['f' - 'a'].piece = new Bishop('B');
-    grid['8' - '1']['g' - 'a'].piece = new Knight('B');
-    grid['8' - '1']['h' - 'a'].piece = new Rook('B');
+    kings[0] = new King(false);
+    grid['8' - '1']['a' - 'a'].piece = new Rook(false);
+    grid['8' - '1']['b' - 'a'].piece = new Knight(false);
+    grid['8' - '1']['c' - 'a'].piece = new Bishop(false);
+    grid['8' - '1']['d' - 'a'].piece = new Queen(false);
+    grid['8' - '1']['e' - 'a'].piece = kings[0];
+    kings[0]->setSquare(&grid['8' - '1']['e' - 'a']);
+    grid['8' - '1']['f' - 'a'].piece = new Bishop(false);
+    grid['8' - '1']['g' - 'a'].piece = new Knight(false);
+    grid['8' - '1']['h' - 'a'].piece = new Rook(false);
 }
 
 // Destructor
@@ -123,7 +120,7 @@ void Board::displayBoard() const
             {
 
                 // Changes text colour
-                if (grid[i][j].piece->getColour() == 'B')
+                if (!grid[i][j].piece->getIsWhite())
                 {
                     // Sets to grey
                     SetConsoleTextAttribute(hConsole, 8);
@@ -154,7 +151,7 @@ void Board::displayBoard() const
 // Gets which player's turn it is
 char Board::getTurn() const
 {
-    return turn;
+    return whiteTurn;
 }
 
 // Used to request board to make move
@@ -166,7 +163,7 @@ Move *Board::requestMove(const std::string &notation, Move *prevMove)
     // Tries to construct move
     try
     {
-        newMove = new Move(turn, notation, prevMove, grid);
+        newMove = new Move(whiteTurn, notation, prevMove, grid);
     }
     catch (const std::invalid_argument &e)
     {
@@ -182,13 +179,10 @@ Move *Board::requestMove(const std::string &notation, Move *prevMove)
     // If start square given
     if (newMove->getStartCol() && newMove->getStartRow())
     {
-        std::cout << "Start square given" << std::endl;
-
         if (grid[newMove->getStartRow() - '1'][newMove->getStartCol() - 'a'].piece &&
             grid[newMove->getStartRow() - '1'][newMove->getStartCol() - 'a'].piece->isValidMove(newMove) &&
             isPathClear(newMove))
         {
-            std::cout << "Found = true" << std::endl;
             found = true;
         }
     }
@@ -261,7 +255,7 @@ Move *Board::requestMove(const std::string &notation, Move *prevMove)
     if (newMove->getCastle())
     {
         // Parameters depending on black/white short/long castle
-        char row = (turn == 'W') ? '1' : '8';
+        char row = whiteTurn ? '1' : '8';
         char colKing;
         char colRook;
         if (newMove->getEnd()->col == 'g')
@@ -276,7 +270,7 @@ Move *Board::requestMove(const std::string &notation, Move *prevMove)
         }
 
         // Makes sure no piece attacking square King is crossing over, and there's a piece in rook square
-        if (squareAttacked(&grid[row - '1'][colKing - 'a'], turn) || !grid[row - '1'][colRook - 'a'].piece)
+        if (squareAttacked(&grid[row - '1'][colKing - 'a'], whiteTurn) || !grid[row - '1'][colRook - 'a'].piece)
         {
             std::cout << "Attacking King square / Found no rook" << std::endl;
 
@@ -284,7 +278,7 @@ Move *Board::requestMove(const std::string &notation, Move *prevMove)
         }
 
         // Constructs castle rook move
-        castleRookMove = new Move(turn, colRook, row, &grid[row - '1'][colKing - 1 - 'a']);
+        castleRookMove = new Move(whiteTurn, colRook, row, &grid[row - '1'][colKing - 1 - 'a']);
 
         // Checks castle rook move is valid and makes move
         if (grid[row - '1'][colRook - 'a'].piece->isValidMove(castleRookMove))
@@ -297,7 +291,7 @@ Move *Board::requestMove(const std::string &notation, Move *prevMove)
     Piece *captured = makeMove(newMove);
 
     // Ensures current player's king is not in check after move is complete
-    if ((turn == 'W' && squareAttacked(whiteKing->getSquare(), turn)) || (turn == 'B' && squareAttacked(blackKing->getSquare(), turn)))
+    if (squareAttacked(kings[whiteTurn]->getSquare(), whiteTurn))
     {
         std::cout << "Own King in check after completion of move" << std::endl;
 
@@ -307,37 +301,21 @@ Move *Board::requestMove(const std::string &notation, Move *prevMove)
     }
 
     // Ensures check status of opposition King matches notation
-    if (turn == 'W')
+    if (squareAttacked(kings[!whiteTurn]->getSquare(), !whiteTurn) != newMove->getCheck())
     {
-        whiteKing->setCheck(false);
-        blackKing->setCheck(newMove->getCheck());
+        undoMove(newMove, captured);
 
-        if (squareAttacked(blackKing->getSquare(), 'B') != newMove->getCheck())
-        {
-            undoMove(newMove, captured);
+        std::cout << "Move check notation is incorrect" << std::endl;
 
-            std::cout << "Move check notation is incorrect" << std::endl;
-
-            return nullptr;
-        }
+        return nullptr;
     }
-    else
-    {
-        blackKing->setCheck(false);
-        whiteKing->setCheck(newMove->getCheck());
 
-        if (squareAttacked(whiteKing->getSquare(), 'W') != newMove->getCheck())
-        {
-            undoMove(newMove, captured);
-
-            std::cout << "Move check notation is incorrect" << std::endl;
-
-            return nullptr;
-        }
-    }
+    // Updates check status
+    kings[whiteTurn]->setCheck(false);
+    kings[!whiteTurn]->setCheck(newMove->getCheck());
 
     // Changes turn
-    turn = (turn == 'W') ? 'B' : 'W';
+    whiteTurn = !whiteTurn;
 
     // Deletes captured piece
     delete captured;
@@ -371,14 +349,7 @@ Piece *Board::makeMove(Move *move)
     // If piece moved is King change King square
     if (move->getPiece() == 'K')
     {
-        if (turn == 'W')
-        {
-            whiteKing->setSquare(move->getEnd());
-        }
-        else
-        {
-            blackKing->setSquare(move->getEnd());
-        }
+        kings[whiteTurn]->setSquare(move->getEnd());
     }
 
     return captured;
@@ -396,19 +367,12 @@ void Board::undoMove(Move *move, Piece *captured)
     // If piece moved is King change King square back
     if (move->getPiece() == 'K')
     {
-        if (turn == 'W')
-        {
-            whiteKing->setSquare(&grid[move->getStartRow() - '1'][move->getStartCol() - 'a']);
-        }
-        else
-        {
-            blackKing->setSquare(&grid[move->getStartRow() - '1'][move->getStartCol() - 'a']);
-        }
+        kings[whiteTurn]->setSquare(&grid[move->getStartRow() - '1'][move->getStartCol() - 'a']);
     }
 }
 
 // Checks that the path is clear to move piece
-bool Board::isPathClear(Move *newMove) const
+bool Board::isPathClear(Move *newMove) const /* Change from addition to multi dimension array of directions by adding 1 to rowStep and colStep */
 {
     // If Knight move don't need to worry
     if (newMove->getPiece() == 'N')
@@ -450,7 +414,7 @@ bool Board::isPathClear(Move *newMove) const
 }
 
 // Checks if a square is attacked by a piece
-bool Board::squareAttacked(Square *square, char player) const
+bool Board::squareAttacked(Square *square, bool player) const
 {
     // Stores square currently being searched
     Square *curr = nullptr;
@@ -467,7 +431,7 @@ bool Board::squareAttacked(Square *square, char player) const
         {
             if (curr->piece)
             {
-                if (curr->piece->getColour() != player &&
+                if (curr->piece->getIsWhite() != player &&
                     (curr->piece->getNotation() == 'K' || curr->piece->attackOrthogonal()))
                 {
                     return true;
@@ -485,7 +449,7 @@ bool Board::squareAttacked(Square *square, char player) const
             if (curr->piece)
             {
                 // If find attacking piece return true
-                if (curr->piece->attackOrthogonal() && curr->piece->getColour() != player)
+                if (curr->piece->attackOrthogonal() && curr->piece->getIsWhite() != player)
                 {
                     return true;
                 }
@@ -509,7 +473,7 @@ bool Board::squareAttacked(Square *square, char player) const
         {
             if (curr->piece)
             {
-                if (curr->piece->getColour() != player &&
+                if (curr->piece->getIsWhite() != player &&
                     (curr->piece->getNotation() == 'K' || curr->piece->attackDiagonal()))
                 {
                     return true;
@@ -527,7 +491,7 @@ bool Board::squareAttacked(Square *square, char player) const
             if (curr->piece)
             {
                 // If find attacking piece return true
-                if (curr->piece->attackDiagonal() && curr->piece->getColour() != player)
+                if (curr->piece->attackDiagonal() && curr->piece->getIsWhite() != player)
                 {
                     return true;
                 }
@@ -551,7 +515,7 @@ bool Board::squareAttacked(Square *square, char player) const
         curr = square->*direction;
 
         // If find attacking piece return true
-        if (curr && curr->piece && curr->piece->getNotation() == 'N' && curr->piece->getColour() != player)
+        if (curr && curr->piece && curr->piece->getNotation() == 'N' && curr->piece->getIsWhite() != player)
         {
             return true;
         }
@@ -563,14 +527,14 @@ bool Board::squareAttacked(Square *square, char player) const
         // Checks for pawn on down left
         if (square->downLeft && square->downLeft->piece &&
             square->downLeft->piece->getNotation() == square->col - 1 &&
-            square->downLeft->piece->getColour() != player)
+            square->downLeft->piece->getIsWhite() != player)
         {
             return true;
         }
         // Checks for pawn on down right
         if (square->downRight && square->downRight->piece &&
             square->downRight->piece->getNotation() == square->col + 1 &&
-            square->downRight->piece->getColour() != player)
+            square->downRight->piece->getIsWhite() != player)
         {
             return true;
         }
@@ -580,14 +544,14 @@ bool Board::squareAttacked(Square *square, char player) const
         // Checks for pawn on up left
         if (square->upLeft && square->upLeft->piece &&
             square->upLeft->piece->getNotation() == square->col - 1 &&
-            square->upLeft->piece->getColour() != player)
+            square->upLeft->piece->getIsWhite() != player)
         {
             return true;
         }
         // Checks for pawn on up right
         if (square->upRight && square->upRight->piece &&
             square->upRight->piece->getNotation() == square->col + 1 &&
-            square->upRight->piece->getColour() != player)
+            square->upRight->piece->getIsWhite() != player)
         {
             return true;
         }

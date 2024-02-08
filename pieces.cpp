@@ -3,7 +3,7 @@
 /* Piece class */
 
 // Constructor
-Piece::Piece(char colour, char notation) : colour(colour), notation(notation)
+Piece::Piece(bool isWhite, char notation) : isWhite(isWhite), notation(notation)
 {
 }
 
@@ -19,9 +19,9 @@ char Piece::getNotation() const
 }
 
 // Gets piece colour
-char Piece::getColour() const
+bool Piece::getIsWhite() const
 {
-    return colour;
+    return isWhite;
 }
 
 // Sets notation of Piece
@@ -45,9 +45,8 @@ bool Piece::getMoved() const
 // Decides if a move is valid
 bool Piece::isValidMove(Move *newMove) const
 {
-    // std::cout << "Got to Piece::isValidMove() for " << getColour() << getNotation() << std::endl;
     // Checks colour matches
-    if (newMove->getColour() != colour)
+    if (newMove->getIsWhite() != isWhite)
     {
         return false;
     }
@@ -64,8 +63,8 @@ bool Piece::isValidMove(Move *newMove) const
 /* Pawn class */
 
 // Constructor
-Pawn::Pawn(char colour, char notation)
-    : Piece(colour, notation)
+Pawn::Pawn(bool isWhite, char notation)
+    : Piece(isWhite, notation)
 {
 }
 
@@ -115,8 +114,8 @@ bool Pawn::attackDiagonal() const
 /* Knight class */
 
 // Constructor
-Knight::Knight(char colour)
-    : Piece(colour, 'N')
+Knight::Knight(bool isWhite)
+    : Piece(isWhite, 'N')
 {
 }
 
@@ -157,8 +156,8 @@ bool Knight::attackDiagonal() const
 /* Bishop class */
 
 // Constructor
-Bishop::Bishop(char colour)
-    : Piece(colour, 'B')
+Bishop::Bishop(bool isWhite)
+    : Piece(isWhite, 'B')
 {
 }
 
@@ -196,8 +195,8 @@ bool Bishop::attackDiagonal() const
 /* Rook class */
 
 // Constructor
-Rook::Rook(char colour)
-    : Piece(colour, 'R')
+Rook::Rook(bool isWhite)
+    : Piece(isWhite, 'R')
 {
 }
 
@@ -244,8 +243,8 @@ bool Rook::attackDiagonal() const
 /* Queen class */
 
 // Constructor
-Queen::Queen(char colour)
-    : Piece(colour, 'Q')
+Queen::Queen(bool isWhite)
+    : Piece(isWhite, 'Q')
 {
 }
 
@@ -285,8 +284,8 @@ bool Queen::attackDiagonal() const
 /* King class */
 
 // Constructor
-King::King(char colour)
-    : Piece(colour, 'K'), inCheck(false)
+King::King(bool isWhite)
+    : Piece(isWhite, 'K'), inCheck(false)
 {
 }
 
@@ -357,8 +356,8 @@ bool King::attackDiagonal() const
 /* Move class */
 
 // Default constructor
-Move::Move(char colour, const std::string &notation, Move *prevMove, Square (&grid)[8][8])
-    : colour(colour), notation(notation), prevMove(prevMove)
+Move::Move(bool isWhite, const std::string &notation, Move *prevMove, Square (&grid)[8][8])
+    : isWhite(isWhite), notation(notation), prevMove(prevMove)
 {
     // Stores regex matches
     std::smatch matches;
@@ -398,7 +397,7 @@ Move::Move(char colour, const std::string &notation, Move *prevMove, Square (&gr
         if (matches[7].matched)
         {
             // Assigns start and end
-            if (colour == 'W')
+            if (isWhite)
             {
                 startRow = '1';
                 startCol = 'e';
@@ -414,7 +413,7 @@ Move::Move(char colour, const std::string &notation, Move *prevMove, Square (&gr
         else
         {
             // Assigns start and end
-            if (colour == 'W')
+            if (isWhite)
             {
                 startRow = '1';
                 startCol = 'e';
@@ -457,7 +456,7 @@ Move::Move(char colour, const std::string &notation, Move *prevMove, Square (&gr
             }
 
             // Checks if piece to capture is opposition piece
-            else if (end->piece->getColour() == colour)
+            else if (end->piece->getIsWhite() == isWhite)
             {
                 throw std::invalid_argument("Can't capture piece of same colour");
             }
@@ -503,8 +502,8 @@ Move::Move(char colour, const std::string &notation, Move *prevMove, Square (&gr
 }
 
 // Castle rook constructor
-Move::Move(char colour, char startCol, char startRow, Square *end)
-    : piece('R'), colour(colour), startCol(startCol), startRow(startRow), end(end),
+Move::Move(bool isWhite, char startCol, char startRow, Square *end)
+    : piece('R'), isWhite(isWhite), startCol(startCol), startRow(startRow), end(end),
       capture(false), castle(true), check(false), mate(false), notation("")
 {
 }
@@ -519,9 +518,9 @@ char Move::getPiece() const
 }
 
 // Gets colour
-char Move::getColour() const
+char Move::getIsWhite() const
 {
-    return colour;
+    return isWhite;
 }
 
 // Sets startCol
