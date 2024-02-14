@@ -43,10 +43,15 @@ public:
     // bool castleSquaresAttacked()
 
     // Checks if King is checkmated
-    // bool kingMated(Move *newMove, King *king) const;
+    bool kingMated(Move *newMove) const;
 
     // Checks if piece can be captured
-    // bool pieceCanBeCaptured(Square *pieceSquare) const;
+    bool pieceCantBeCaptured(Square *pieceSquare) const;
+
+    /* Changes to make
+    Add King checked function that looks at only the piece that moved and pieces on the line from where the piece made
+    Only call square attacked function on King's end location if the King is the piece that has moved
+    Just figure it out. You can do better.*/
 
 private:
     bool whiteTurn;    // Stores which player's turn it is

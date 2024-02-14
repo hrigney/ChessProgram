@@ -378,7 +378,7 @@ Move::Move(bool isWhite, const std::string &notation, Move *prevMove, Square (&g
     else if (matches[9].matched)
     {
         mate = true;
-        check = false;
+        check = true;
     }
     else
     {
@@ -445,25 +445,32 @@ Move::Move(bool isWhite, const std::string &notation, Move *prevMove, Square (&g
         {
             capture = true;
 
-            // Checks there is a piece there to be captured, or is a valid en passant move
-            if (!end->piece &&
-                !(prevMove &&                                            // There is a previous move
-                  (end->col == prevMove->getPiece()) &&                  // Curr move end column matches prevMove piece
-                  (std::abs(prevMove->getStartRow() - end->row) == 1) && // prevMove started 1 spot above/ below end location
-                  (std::abs(prevMove->getEnd()->row - end->row) == 1)))  // prevMove ended 1 spot above/ below end location
-            {
-                throw std::invalid_argument("No piece to capture");
-            }
+            // Checks if move is en passant
+            enPassant = (piece >= 'a' && piece <= 'h' &&                        // Piece is a pawn
+                         (end->col == prevMove->getPiece()) &&                  // Current move end column matches prevMove piece
+                         (std::abs(prevMove->getStartRow() - end->row) == 1) && // prevMove started 1 spot above/ below end location
+                         (std::abs(prevMove->getEnd()->row - end->row) == 1));  // prevMove ended 1 spot above/ below end location)
 
-            // Checks if piece to capture is opposition piece
-            else if (end->piece->getIsWhite() == isWhite)
+            if (!enPassant)
             {
-                throw std::invalid_argument("Can't capture piece of same colour");
+                // Checks there is a piece to be captured
+                if (!end->piece)
+                {
+                    throw std::invalid_argument("No piece to capture");
+                }
+
+                // Checks if piece to capture is opposition piece
+                if (end->piece->getIsWhite() == isWhite)
+                {
+                    throw std::invalid_argument("Can't capture piece of same colour");
+                }
             }
+            // En passant rules already verify piece to be captured and no piece on square
         }
         else
         {
             capture = false;
+            enPassant = false;
 
             // If not capture ensures there's no piece on square
             if (end->piece)
@@ -575,6 +582,12 @@ bool Move::getCheck() const
 bool Move::getMate() const
 {
     return mate;
+}
+
+// Gets enPassant
+bool Move::getEnPassant() const
+{
+    return enPassant;
 }
 
 // Gets notation

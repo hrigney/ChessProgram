@@ -15,44 +15,44 @@ Board::Board() : whiteTurn(true)
             grid[i][j].col = 'a' + j;
 
             // Adds adjacent squares
-            if (i > 0)
+            if (i >= 1)
+                grid[i][j].down = &grid[i - 1][j];
+            if (i <= 6)
+                grid[i][j].up = &grid[i + 1][j];
+            if (j >= 1)
             {
-                grid[i][j].left = &grid[i - 1][j];
-                if (j > 0)
+                grid[i][j].left = &grid[i][j - 1];
+                if (i >= 1)
                     grid[i][j].downLeft = &grid[i - 1][j - 1];
-                if (j < 7)
-                    grid[i][j].upLeft = &grid[i - 1][j + 1];
+                if (i <= 6)
+                    grid[i][j].upLeft = &grid[i + 1][j - 1];
             }
-            if (i < 7)
+            if (j <= 6)
             {
-                grid[i][j].right = &grid[i + 1][j];
-                if (j > 0)
-                    grid[i][j].downRight = &grid[i + 1][j - 1];
-                if (j < 7)
+                grid[i][j].right = &grid[i][j + 1];
+                if (i >= 1)
+                    grid[i][j].downRight = &grid[i - 1][j + 1];
+                if (i <= 6)
                     grid[i][j].upRight = &grid[i + 1][j + 1];
             }
-            if (j > 0)
-                grid[i][j].down = &grid[i][j - 1];
-            if (j < 7)
-                grid[i][j].up = &grid[i][j + 1];
 
             // Adds knight squares
-            if (i > 1 && j > 0)
-                grid[i][j].knightUpLeft = &grid[i - 2][j - 1];
-            if (i > 0 && j > 1)
-                grid[i][j].knightLeftUp = &grid[i - 1][j - 2];
-            if (i > 1 && j < 7)
-                grid[i][j].knightUpRight = &grid[i - 2][j + 1];
-            if (i > 0 && j < 6)
-                grid[i][j].knightRightUp = &grid[i - 1][j + 2];
-            if (i < 6 && j > 0)
-                grid[i][j].knightDownLeft = &grid[i + 2][j - 1];
-            if (i < 7 && j > 1)
-                grid[i][j].knightLeftDown = &grid[i + 1][j - 2];
-            if (i < 6 && j < 7)
-                grid[i][j].knightDownRight = &grid[i + 2][j + 1];
-            if (i < 7 && j < 6)
-                grid[i][j].knightRightDown = &grid[i + 1][j + 2];
+            if (i <= 5 && j >= 1)
+                grid[i][j].knightUpLeft = &grid[i + 2][j - 1];
+            if (i <= 6 && j >= 2)
+                grid[i][j].knightLeftUp = &grid[i + 1][j - 2];
+            if (i <= 5 && j <= 6)
+                grid[i][j].knightUpRight = &grid[i + 2][j + 1];
+            if (i <= 6 && j <= 5)
+                grid[i][j].knightRightUp = &grid[i + 1][j + 2];
+            if (i >= 2 && j >= 1)
+                grid[i][j].knightDownLeft = &grid[i - 2][j - 1];
+            if (i >= 1 && j >= 2)
+                grid[i][j].knightLeftDown = &grid[i - 1][j - 2];
+            if (i >= 2 && j <= 6)
+                grid[i][j].knightDownRight = &grid[i - 2][j + 1];
+            if (i >= 1 && j <= 5)
+                grid[i][j].knightRightDown = &grid[i - 1][j + 2];
         }
     }
 
@@ -245,6 +245,8 @@ Move *Board::requestMove(const std::string &notation, Move *prevMove)
     // If not found return null ptr
     if (!found)
     {
+        std::cout << "Invalid move" << std::endl;
+
         return nullptr;
     }
 
@@ -256,21 +258,22 @@ Move *Board::requestMove(const std::string &notation, Move *prevMove)
     {
         // Parameters depending on black/white short/long castle
         char row = whiteTurn ? '1' : '8';
-        char colKing;
-        char colRook;
+        char colStart;
+        char colEnd;
         if (newMove->getEnd()->col == 'g')
         {
-            colKing = 'g';
-            colRook = 'h';
+            colStart = 'h';
+            colEnd = 'f';
         }
         else
         {
-            colKing = 'd';
-            colRook = 'a';
+            colStart = 'a';
+            colEnd = 'd';
         }
 
         // Makes sure no piece attacking square King is crossing over, and there's a piece in rook square
-        if (squareAttacked(&grid[row - '1'][colKing - 'a'], whiteTurn) || !grid[row - '1'][colRook - 'a'].piece)
+        if (squareAttacked(&grid[row - '1'][colEnd - 'a'], whiteTurn) ||
+            !grid[row - '1'][colStart - 'a'].piece)
         {
             std::cout << "Attacking King square / Found no rook" << std::endl;
 
@@ -278,10 +281,10 @@ Move *Board::requestMove(const std::string &notation, Move *prevMove)
         }
 
         // Constructs castle rook move
-        castleRookMove = new Move(whiteTurn, colRook, row, &grid[row - '1'][colKing - 1 - 'a']);
+        castleRookMove = new Move(whiteTurn, colStart, row, &grid[row - '1'][colEnd - 'a']);
 
         // Checks castle rook move is valid and makes move
-        if (grid[row - '1'][colRook - 'a'].piece->isValidMove(castleRookMove))
+        if (grid[row - '1'][colStart - 'a'].piece->isValidMove(castleRookMove))
         {
             makeMove(castleRookMove);
         }
@@ -290,25 +293,47 @@ Move *Board::requestMove(const std::string &notation, Move *prevMove)
     // Makes move, storing any captured piece
     Piece *captured = makeMove(newMove);
 
+    // Stores true if needs to call undoMove
+    bool doUndoMove = false;
+
     // Ensures current player's king is not in check after move is complete
     if (squareAttacked(kings[whiteTurn]->getSquare(), whiteTurn))
     {
-        std::cout << "Own King in check after completion of move" << std::endl;
-
-        undoMove(newMove, captured);
-
-        return nullptr;
+        std::cout << "Own King in check after move" << std::endl;
+        doUndoMove = true;
     }
 
     // Ensures check status of opposition King matches notation
-    if (squareAttacked(kings[!whiteTurn]->getSquare(), !whiteTurn) != newMove->getCheck())
+    else if (squareAttacked(kings[!whiteTurn]->getSquare(), !whiteTurn) != newMove->getCheck())
+    {
+        std::cout << "Move check notation is incorrect" << std::endl;
+        doUndoMove = true;
+    }
+
+    // Ensures mate status of opposition King matches notation
+    else if (newMove->getCheck() && (kingMated(newMove) != newMove->getMate()))
+    {
+        std::cout << "Move checkmate notation is incorrect" << std::endl;
+        doUndoMove = true;
+    }
+
+    // Undoes move if necessary
+    if (doUndoMove)
     {
         undoMove(newMove, captured);
 
-        std::cout << "Move check notation is incorrect" << std::endl;
+        if (castleRookMove)
+        {
+            undoMove(castleRookMove, nullptr);
+        }
 
         return nullptr;
     }
+
+    /* Logic to implement
+    if newMove is checkmate
+        end game
+    */
 
     // Updates check status
     kings[whiteTurn]->setCheck(false);
@@ -323,6 +348,12 @@ Move *Board::requestMove(const std::string &notation, Move *prevMove)
     // Assigns moved to piece as true
     newMove->getEnd()->piece->setMoved();
 
+    // If move is a pawn, updates notation
+    if (newMove->getPiece() >= 'a' && newMove->getPiece() <= 'h' && newMove->getCapture())
+    {
+        newMove->getEnd()->piece->setNotation(newMove->getEnd()->col);
+    }
+
     // Returns newMove if succesful
     return newMove;
 }
@@ -334,7 +365,23 @@ Piece *Board::makeMove(Move *move)
     Piece *captured = nullptr;
     if (move->getCapture())
     {
-        captured = move->getEnd()->piece;
+        if (move->getEnPassant()) // If capture is en passant
+        {
+            if (whiteTurn)
+            {
+                captured = move->getEnd()->down->piece;
+                move->getEnd()->down->piece = nullptr;
+            }
+            else
+            {
+                captured = move->getEnd()->up->piece;
+                move->getEnd()->up->piece = nullptr;
+            }
+        }
+        else
+        {
+            captured = move->getEnd()->piece;
+        }
     }
 
     // Assigns piece to be moved
@@ -362,7 +409,22 @@ void Board::undoMove(Move *move, Piece *captured)
     grid[move->getStartRow() - '1'][move->getStartCol() - 'a'].piece = move->getEnd()->piece;
 
     // Reverts end square back to prior state
-    move->getEnd()->piece = captured;
+    if (move->getEnPassant())
+    {
+        if (whiteTurn)
+        {
+            move->getEnd()->down->piece = captured;
+        }
+        else
+        {
+            move->getEnd()->up->piece = captured;
+        }
+        move->getEnd()->piece = nullptr;
+    }
+    else
+    {
+        move->getEnd()->piece = captured;
+    }
 
     // If piece moved is King change King square back
     if (move->getPiece() == 'K')
@@ -413,7 +475,7 @@ bool Board::isPathClear(Move *newMove) const /* Change from addition to multi di
     return true;
 }
 
-// Checks if a square is attacked by a piece
+// Checks if a square is attacked by a piece, player is colour of defender
 bool Board::squareAttacked(Square *square, bool player) const
 {
     // Stores square currently being searched
@@ -522,7 +584,7 @@ bool Board::squareAttacked(Square *square, bool player) const
     }
 
     // Checks for opposing pawns
-    if (player == 'W')
+    if (player)
     {
         // Checks for pawn on down left
         if (square->downLeft && square->downLeft->piece &&
@@ -559,4 +621,169 @@ bool Board::squareAttacked(Square *square, bool player) const
 
     // If couldn't find an attacking piece, return false
     return false;
+}
+
+// Checks if King is checkmated
+bool Board::kingMated(Move *move) const
+{
+    // Stores multidimensional array of directions
+    std::array<std::array<Square * Square::*, 3>, 3> directions = {{{&Square::downLeft, &Square::down, &Square::downRight},
+                                                                    {&Square::left, nullptr, &Square::right},
+                                                                    {&Square::upLeft, &Square::up, &Square::upRight}}};
+
+    // Stores square being searched
+    Square *curr;
+
+    // Checks whether there any surrounding squares the King can move to
+    for (auto &row : directions)
+    {
+        for (Square *Square::*direction : row)
+        {
+            if (direction)
+            {
+                curr = kings[!whiteTurn]->getSquare()->*direction;
+
+                if (curr && !curr->piece &&
+                    !squareAttacked(curr, !whiteTurn))
+                {
+                    return false;
+                }
+            }
+        }
+    }
+
+    // Tracks whether the moved piece checks the King
+    bool movedPieceChecks = false;
+
+    // If piece moved is knight
+    if (move->getPiece() == 'N')
+    {
+        // Iterates through knight movements
+        std::array<Square * Square::*, 8> knightDirections = {
+            &Square::knightUpLeft, &Square::knightUpRight,
+            &Square::knightDownLeft, &Square::knightDownRight,
+            &Square::knightLeftUp, &Square::knightLeftDown,
+            &Square::knightRightUp, &Square::knightRightDown};
+
+        for (Square *Square::*direction : knightDirections)
+        {
+            curr = move->getEnd()->*direction;
+
+            // If find King
+            if (curr == kings[!whiteTurn]->getSquare())
+            {
+                movedPieceChecks = true;
+                break;
+            }
+        }
+    }
+    // If piece moved is pawn
+    else if (move->getPiece() >= 'a' && move->getPiece() <= 'h')
+    {
+        if (whiteTurn)
+        {
+            // Checks if pawn is up left or up right from King
+            if (kings[!whiteTurn]->getSquare()->upLeft == move->getEnd() ||
+                kings[!whiteTurn]->getSquare()->upRight == move->getEnd())
+            {
+                movedPieceChecks = true;
+            }
+        }
+        else
+        {
+            // Checks if pawn is down left or down right from King
+            if (kings[!whiteTurn]->getSquare()->downLeft == move->getEnd() ||
+                kings[!whiteTurn]->getSquare()->downRight == move->getEnd())
+            {
+                movedPieceChecks = true;
+            }
+        }
+    }
+    // If any other piece has moved
+    else
+    {
+        // Stores how far moved piece is from King col and row wise
+        int rowMove = move->getEnd()->row - kings[!whiteTurn]->getSquare()->row;
+        int colMove = move->getEnd()->col - kings[!whiteTurn]->getSquare()->col;
+
+        // Basic check to ensure it is geometrically possible to move from King to piece
+        if (rowMove == 0 || colMove == 0 || std::abs(colMove) == std::abs(rowMove))
+        {
+            // Stores array index used to access direction
+            int rowStep = (rowMove > 0) - (rowMove < 0) + 1;
+            int colStep = (colMove > 0) - (colMove < 0) + 1;
+
+            // Start at Kings square
+            curr = kings[!whiteTurn]->getSquare()->*directions[rowStep][colStep];
+
+            // Move in direction of moved piece, stopping when we run into a piece
+            while (!curr->piece)
+            {
+                curr = curr->*directions[rowStep][colStep];
+            }
+
+            // If King sees piece and piece attacks
+            if (curr == move->getEnd() &&
+                (((!rowMove || !colMove) && curr->piece->attackOrthogonal()) || // If moves orthogonally and attacks orthogonally
+                 ((rowMove && colMove) && curr->piece->attackDiagonal())))      // If moves diagonally and attacks diagonally
+            {
+                movedPieceChecks = true;
+            }
+        }
+    }
+
+    // If moved piece checks and can't be captured, return true
+    if (movedPieceChecks && pieceCantBeCaptured(move->getEnd()))
+    {
+        return true;
+    }
+
+    // Checks for discovered checks
+
+    // Stores how far moved piece starting square is from King col and row wise
+    int rowMove = move->getStartRow() - kings[!whiteTurn]->getSquare()->row;
+    int colMove = move->getStartCol() - kings[!whiteTurn]->getSquare()->col;
+
+    // Basic check to ensure it is geometrically possible to move from King to any discovered checks
+    if (rowMove == 0 || colMove == 0 || std::abs(colMove) == std::abs(rowMove))
+    {
+        // Stores array index used to access direction
+        int rowStep = (rowMove > 0) - (rowMove < 0) + 1;
+        int colStep = (colMove > 0) - (colMove < 0) + 1;
+
+        // Start at Kings square
+        curr = kings[!whiteTurn]->getSquare()->*directions[rowStep][colStep];
+
+        // Move in direction of moved piece starting square, stopping when we run into a piece or get to the end of the board
+        while (curr && !curr->piece)
+        {
+            curr = curr->*directions[rowStep][colStep];
+        }
+
+        // If King sees an opposing piece and piece attacks
+        if (curr && curr->piece && curr->piece->getIsWhite() == whiteTurn &&
+            (((!rowMove || !colMove) && curr->piece->attackOrthogonal()) || // If moves orthogonally and attacks orthogonally
+             ((rowMove && colMove) && curr->piece->attackDiagonal())))      // If moves diagonally and attacks diagonally
+        {
+            if (movedPieceChecks || pieceCantBeCaptured(curr))
+            {
+                return true;
+            }
+
+            movedPieceChecks = true; // In case of rare double discovered check
+        }
+    }
+
+    // En passant discovered check
+    if (move->getEnPassant())
+    {
+    }
+
+    return false;
+}
+
+// Checks if piece can be captured
+bool Board::pieceCantBeCaptured(Square *pieceSquare) const
+{
+    return !squareAttacked(pieceSquare, pieceSquare->piece->getIsWhite());
 }

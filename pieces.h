@@ -254,6 +254,9 @@ public:
     // Gets mate
     bool getMate() const;
 
+    // Gets enPassant
+    bool getEnPassant() const;
+
     // Gets notation
     const std::string &getNotation() const;
 
@@ -278,6 +281,7 @@ private:
     bool castle;
     bool check;
     bool mate;
+    bool enPassant;
 
     // PGN notation of move
     const std::string notation;
