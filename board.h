@@ -37,7 +37,7 @@ public:
     bool isPathClear(Move *newMove) const;
 
     // Checks if a square is attacked by a piece
-    bool squareAttacked(Square *square, bool player) const;
+    bool squareAttacked(Square *square, bool player, bool noKing = false, bool checkPins = false) const;
 
     // Checks if castle squares are attacked
     // bool castleSquaresAttacked()
@@ -47,6 +47,9 @@ public:
 
     // Checks if piece can be captured
     bool pieceCantBeCaptured(Square *pieceSquare) const;
+
+    // Checks if piece is not pinned
+    bool pieceNotPinned(Square *pieceSquare) const;
 
     /* Changes to make
     Add King checked function that looks at only the piece that moved and pieces on the line from where the piece made
