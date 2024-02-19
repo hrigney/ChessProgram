@@ -58,6 +58,13 @@ void Game::promptMove()
     // Stores newMove
     prevMove = newMove;
 
-    // Prompts new move
-    promptMove();
+    // Prompts new move if not check mate
+    if (!prevMove->getMate())
+    {
+        promptMove();
+    }
+    else
+    {
+        std::cout << "CHECKMATE!" << std::endl;
+    }
 }
