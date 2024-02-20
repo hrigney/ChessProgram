@@ -257,6 +257,9 @@ public:
     // Gets enPassant
     bool getEnPassant() const;
 
+    // Gets promotion
+    char getPromotion() const;
+
     // Gets notation
     const std::string &getNotation() const;
 
@@ -282,6 +285,7 @@ private:
     bool check;
     bool mate;
     bool enPassant;
+    char promotion = '\0';
 
     // PGN notation of move
     const std::string notation;

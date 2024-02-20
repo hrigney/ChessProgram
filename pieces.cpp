@@ -81,7 +81,7 @@ bool Pawn::isValidMove(Move *newMove) const
     if (newMove->getCapture())
     {
         // If doesn't move 1 diagonal
-        if ((std::abs(newMove->getEnd()->row - newMove->getStartRow()) != 1) ||
+        if (newMove->getEnd()->row - newMove->getStartRow() != ((newMove->getIsWhite()) ? 1 : -1) ||
             (std::abs(newMove->getEnd()->col - newMove->getStartCol()) != 1))
         {
             return false;
@@ -90,7 +90,26 @@ bool Pawn::isValidMove(Move *newMove) const
     else
     {
         // If doesn't move 1/2 up
-        if ((std::abs(newMove->getEnd()->row - newMove->getStartRow()) != 1) && !((std::abs(newMove->getEnd()->row - newMove->getStartRow()) == 2) && !getMoved()))
+        if (newMove->getEnd()->row - newMove->getStartRow() != ((newMove->getIsWhite()) ? 1 : -1) &&
+            !(newMove->getEnd()->row - newMove->getStartRow() == ((newMove->getIsWhite()) ? 2 : -2) && !getMoved()))
+        {
+            return false;
+        }
+    }
+
+    // If move is a promotion, pawn has to reach last row
+    if (newMove->getPromotion())
+    {
+        // Pawn has to reach last row
+        if (newMove->getEnd()->row != '8' && newMove->getEnd()->row != '1')
+        {
+            return false;
+        }
+    }
+    else
+    {
+        // Move has to be promotion if reaches last row
+        if (newMove->getEnd()->row == '8' || newMove->getEnd()->row == '1')
         {
             return false;
         }
@@ -369,13 +388,13 @@ Move::Move(bool isWhite, const std::string &notation, Move *prevMove, Square (&g
     }
 
     // Assigns check
-    if (matches[8].matched)
+    if (matches[9].matched)
     {
         check = true;
         mate = false;
     }
     // Assigns mate
-    else if (matches[9].matched)
+    else if (matches[10].matched)
     {
         mate = true;
         check = true;
@@ -387,14 +406,14 @@ Move::Move(bool isWhite, const std::string &notation, Move *prevMove, Square (&g
     }
 
     // Checks if move is castle
-    if (matches[6].matched)
+    if (matches[7].matched)
     {
         piece = 'K';
         castle = true;
         capture = false;
 
         // Checks if move is long castle
-        if (matches[7].matched)
+        if (matches[8].matched)
         {
             // Assigns start and end
             if (isWhite)
@@ -445,11 +464,20 @@ Move::Move(bool isWhite, const std::string &notation, Move *prevMove, Square (&g
         {
             capture = true;
 
-            // Checks if move is en passant
-            enPassant = (piece >= 'a' && piece <= 'h' &&                        // Piece is a pawn
-                         (end->col == prevMove->getPiece()) &&                  // Current move end column matches prevMove piece
-                         (std::abs(prevMove->getStartRow() - end->row) == 1) && // prevMove started 1 spot above/ below end location
-                         (std::abs(prevMove->getEnd()->row - end->row) == 1));  // prevMove ended 1 spot above/ below end location)
+            // If move is promotion assign promotion
+            if (matches[6].matched)
+            {
+                promotion = matches[6].str().back();
+                enPassant = false; // Can't be en passant if promotion
+            }
+            else
+            {
+                // Checks if move is en passant
+                enPassant = (piece >= 'a' && piece <= 'h' &&                        // Piece is a pawn
+                             (end->col == prevMove->getPiece()) &&                  // Current move end column matches prevMove piece
+                             (std::abs(prevMove->getStartRow() - end->row) == 1) && // prevMove started 1 spot above/ below end location
+                             (std::abs(prevMove->getEnd()->row - end->row) == 1));  // prevMove ended 1 spot above/ below end location)
+            }
 
             if (!enPassant)
             {
@@ -516,7 +544,7 @@ Move::Move(bool isWhite, char startCol, char startRow, Square *end)
 }
 
 // Regex pattern
-const std::regex Move::pattern("(?:(?:((?:[KQRBN]([a-h])?([1-8])?x?)|(?:([a-h])x))?([a-h][1-8]))|(O-O(-O)?))(?:(\\+)|(\\#))?");
+const std::regex Move::pattern("(?:(?:((?:[KQRBN]([a-h])?([1-8])?x?)|(?:([a-h])x))?([a-h][1-8])(=[QRBN])?)|(O-O(-O)?))(?:(\\+)|(\\#))?");
 
 // Gets piece
 char Move::getPiece() const
@@ -588,6 +616,12 @@ bool Move::getMate() const
 bool Move::getEnPassant() const
 {
     return enPassant;
+}
+
+// Gets promotion
+char Move::getPromotion() const
+{
+    return promotion;
 }
 
 // Gets notation

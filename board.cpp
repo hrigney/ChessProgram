@@ -302,7 +302,6 @@ Move *Board::requestMove(const std::string &notation, Move *prevMove)
         std::cout << "Own King in check after move" << std::endl;
         doUndoMove = true;
     }
-
     // Ensures check status of opposition King matches notation
     else if (squareAttacked(kings[!whiteTurn]->getSquare(), !whiteTurn) != newMove->getCheck())
     {
@@ -330,11 +329,6 @@ Move *Board::requestMove(const std::string &notation, Move *prevMove)
         return nullptr;
     }
 
-    /* Logic to implement
-    if newMove is checkmate
-        end game
-    */
-
     // Updates check status
     kings[whiteTurn]->setCheck(false);
     kings[!whiteTurn]->setCheck(newMove->getCheck());
@@ -347,12 +341,6 @@ Move *Board::requestMove(const std::string &notation, Move *prevMove)
 
     // Assigns moved to piece as true
     newMove->getEnd()->piece->setMoved();
-
-    // If move is a pawn, updates notation
-    if (newMove->getPiece() >= 'a' && newMove->getPiece() <= 'h' && newMove->getCapture())
-    {
-        newMove->getEnd()->piece->setNotation(newMove->getEnd()->col);
-    }
 
     // Returns newMove if succesful
     return newMove;
@@ -387,6 +375,31 @@ Piece *Board::makeMove(Move *move)
     // Assigns piece to be moved
     Piece *toMove = grid[move->getStartRow() - '1'][move->getStartCol() - 'a'].piece;
 
+    // If move is promotion creates new piece
+    if (move->getPromotion())
+    {
+        // Deletes old piece
+        delete toMove;
+
+        // Assigns new piece
+        if (move->getPromotion() == 'Q')
+        {
+            toMove = new Queen(toMove->getIsWhite());
+        }
+        else if (move->getPromotion() == 'R')
+        {
+            toMove = new Rook(toMove->getIsWhite());
+        }
+        else if (move->getPromotion() == 'B')
+        {
+            toMove = new Bishop(toMove->getIsWhite());
+        }
+        else if (move->getPromotion() == 'N')
+        {
+            toMove = new Knight(toMove->getIsWhite());
+        }
+    }
+
     // Removes from previous square
     grid[move->getStartRow() - '1'][move->getStartCol() - 'a'].piece = nullptr;
 
@@ -399,6 +412,12 @@ Piece *Board::makeMove(Move *move)
         kings[whiteTurn]->setSquare(move->getEnd());
     }
 
+    // If move is a pawn capture, updates notation
+    if (toMove->getNotation() >= 'a' && toMove->getNotation() <= 'h' && move->getCapture())
+    {
+        move->getEnd()->piece->setNotation(move->getEnd()->col);
+    }
+
     return captured;
 }
 
@@ -406,7 +425,15 @@ Piece *Board::makeMove(Move *move)
 void Board::undoMove(Move *move, Piece *captured)
 {
     // Moves back piece
-    grid[move->getStartRow() - '1'][move->getStartCol() - 'a'].piece = move->getEnd()->piece;
+    if (move->getPromotion())
+    {
+        delete move->getEnd()->piece;
+        grid[move->getStartRow() - '1'][move->getStartCol() - 'a'].piece = new Pawn(move->getIsWhite(), move->getStartCol());
+    }
+    else
+    {
+        grid[move->getStartRow() - '1'][move->getStartCol() - 'a'].piece = move->getEnd()->piece;
+    }
 
     // Reverts end square back to prior state
     if (move->getEnPassant())
@@ -430,6 +457,12 @@ void Board::undoMove(Move *move, Piece *captured)
     if (move->getPiece() == 'K')
     {
         kings[whiteTurn]->setSquare(&grid[move->getStartRow() - '1'][move->getStartCol() - 'a']);
+    }
+
+    // If move is a pawn capture, reverts notation
+    if (move->getPiece() >= 'a' && move->getPiece() <= 'h' && move->getCapture())
+    {
+        move->getEnd()->piece->setNotation(move->getStartCol());
     }
 }
 

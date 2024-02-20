@@ -50,8 +50,8 @@ void Game::promptMove()
 
         // Attempts to create a new move using input
         newMove = board.requestMove(input, prevMove);
+        std::cout << std::endl;
     }
-    std::cout << std::endl;
     board.displayBoard();
     std::cout << std::endl;
 
